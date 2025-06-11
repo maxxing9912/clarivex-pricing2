@@ -13,20 +13,35 @@ export default function PricingPage() {
   const [plan, setPlan] = useState<"free" | "premium">("free");
   const typewriterRef = useRef<HTMLSpanElement>(null);
 
+  // On login, query your API for true premium status
   useEffect(() => {
-    if (session) {
-      const stored = localStorage.getItem("clarivexPlan");
-      setPlan(stored === "premium" ? "premium" : "free");
-    } else {
+    if (!session?.user?.id) {
       setPlan("free");
-      localStorage.removeItem("clarivexPlan");
+      return;
     }
+
+    fetch("/api/premium-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discordId: session.user.id }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        setPlan(data.hasPremium ? "premium" : "free");
+        if (data.hasPremium) localStorage.setItem("clarivexPlan", "premium");
+      })
+      .catch(() => {
+        setPlan("free");
+        localStorage.removeItem("clarivexPlan");
+      });
   }, [session]);
 
+  // Save to localStorage only after confirmation from server
   useEffect(() => {
-    if (session) localStorage.setItem("clarivexPlan", plan);
-  }, [plan, session]);
+    if (plan === "free") localStorage.removeItem("clarivexPlan");
+  }, [plan]);
 
+  // Typewriter animation
   useEffect(() => {
     AOS.init({ once: true, duration: 1000, easing: "ease-out-back" });
     const words = [
@@ -34,10 +49,8 @@ export default function PricingPage() {
       "One-time Premium $3.99.",
       "Lifetime Access to Clarivex.",
     ];
-    let wi = 0,
-      ci = 0,
-      del = false,
-      timeout: NodeJS.Timeout;
+    let wi = 0, ci = 0, del = false, timeout: NodeJS.Timeout;
+
     const tick = () => {
       const full = words[wi];
       if (!del) {
@@ -51,7 +64,7 @@ export default function PricingPage() {
       } else {
         ci--;
         typewriterRef.current!.textContent = full.slice(0, ci);
-        if (ci === 0) {
+        if (!ci) {
           del = false;
           wi = (wi + 1) % words.length;
         }
@@ -62,12 +75,14 @@ export default function PricingPage() {
     return () => clearTimeout(timeout);
   }, []);
 
+  // Fire Stripe checkout
   const createCheckoutSession = async () => {
     if (!session) {
-      signIn("discord");
-      return;
+      return signIn("discord");
     }
-    if (plan === "premium") return;
+    if (plan === "premium") {
+      return alert("You already own Premium.");
+    }
     try {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -75,23 +90,17 @@ export default function PricingPage() {
         body: JSON.stringify({ discordId: session.user.id }),
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to create session");
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create session");
       }
-      const { sessionId } = (await res.json()) as { sessionId: string };
+      const { sessionId } = await res.json();
       const stripe = await loadStripe(stripePublicKey);
       const result = await stripe!.redirectToCheckout({ sessionId });
-      if (result?.error) {
-        throw new Error(result.error.message);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      if (result?.error) throw new Error(result.error.message);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Something went wrong.";
       alert(msg);
     }
-  };
-
-  const handleSelectFree = () => {
-    if (session && plan !== "premium") setPlan("free");
   };
 
   return (
@@ -121,13 +130,12 @@ export default function PricingPage() {
       {/* PLANS */}
       <section className="bg-white py-20 flex-1">
         <div className="container mx-auto max-w-4xl grid md:grid-cols-2 gap-8 px-6">
-          {/* Free */}
+          {/* FREE PLAN */}
           <div
             data-aos="zoom-in"
             className={`bg-white border rounded-xl shadow-md p-8 hover:shadow-lg transition cursor-pointer ${
               plan === "free" ? "border-indigo-500" : "border-gray-200"
             }`}
-            onClick={handleSelectFree}
           >
             <h3 className="text-2xl font-bold mb-2">Free</h3>
             <p className="text-xl text-gray-500 mb-4">Forever Free</p>
@@ -139,27 +147,33 @@ export default function PricingPage() {
             <button
               className="w-full py-2 px-4 font-semibold rounded-full border bg-white text-gray-900 hover:bg-gray-100 transition"
               disabled={!session || plan === "premium"}
-              onClick={() => !session && signIn("discord")}
+              onClick={() => {
+                if (!session) signIn("discord");
+              }}
             >
-              {!session ? "Login to select" : plan === "free" ? "Current Plan" : "Select Free"}
+              {!session
+                ? "Login to select"
+                : plan === "free"
+                ? "Current Plan"
+                : "Select Free"}
             </button>
           </div>
 
-          {/* Premium */}
+          {/* PREMIUM PLAN */}
           <div
             data-aos="zoom-in"
             data-aos-delay="200"
             className={`bg-indigo-600 text-white border rounded-xl shadow-md p-8 hover:shadow-lg transition cursor-pointer ${
-              plan === "premium" ? "ring-2 ring-offset-2 ring-white" : "border-transparent"
+              plan === "premium"
+                ? "ring-2 ring-offset-2 ring-white"
+                : "border-transparent"
             }`}
-            onClick={() => {
-              if (!session) return signIn("discord");
-              if (plan === "free") setPlan("premium");
-            }}
           >
             <h3 className="text-2xl font-bold mb-2">Premium</h3>
             <p className="text-3xl font-bold mb-1">$3.99</p>
-            <p className="text-sm mb-4 text-indigo-200">One-time payment • Lifetime Access</p>
+            <p className="text-sm mb-4 text-indigo-200">
+              One-time payment • Lifetime Access
+            </p>
             <ul className="mb-6 space-y-2 text-left list-disc list-inside text-sm">
               <li>Advanced Moderation</li>
               <li>Full XP & Levels</li>
