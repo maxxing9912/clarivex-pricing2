@@ -10,9 +10,12 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 let discordClient: Client | null = null;
 
 async function getDiscordClient(): Promise<Client> {
-  if (discordClient && discordClient.isReady()) return discordClient;
-
-  discordClient = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+  if (discordClient && discordClient.isReady()) {
+    return discordClient;
+  }
+  discordClient = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+  });
   await discordClient.login(process.env.DISCORD_BOT_TOKEN!);
   await new Promise<void>((resolve) => discordClient!.once("ready", () => resolve()));
   return discordClient;
@@ -25,11 +28,13 @@ async function getRawBody(request: Request): Promise<Buffer> {
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
-  if (!signature) return NextResponse.json({ error: "Missing stripe signature" }, { status: 400 });
+  if (!signature) {
+    return NextResponse.json({ error: "Missing stripe signature" }, { status: 400 });
+  }
 
-  const buf = await getRawBody(request);
   let event: Stripe.Event;
   try {
+    const buf = await getRawBody(request);
     event = stripe.webhooks.constructEvent(buf, signature, webhookSecret);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -40,18 +45,26 @@ export async function POST(request: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     const discordId = session.metadata?.discordId;
     if (!discordId) {
-      return NextResponse.json({ error: "Missing discordId in metadata" }, { status: 400 });
-    }
-    try {
-      const discord = await getDiscordClient();
-      const guild = await discord.guilds.fetch(process.env.DISCORD_GUILD_ID!);
-      const member = await guild.members.fetch(discordId);
-      await member.roles.add(process.env.DISCORD_PREMIUM_ROLE_ID!);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      console.error("Discord role assignment error:", msg);
-      return NextResponse.json({ error: "Failed to assign Discord role" }, { status: 500 });
+      // Se manca discordId, logga e continua o ritorna errore a piacere
+      console.warn("checkout.session.completed senza metadata.discordId");
+      // Se preferisci bloccare: 
+      // return NextResponse.json({ error: "Missing discordId in metadata" }, { status: 400 });
+    } else {
+      try {
+        const discord = await getDiscordClient();
+        const guild = await discord.guilds.fetch(process.env.DISCORD_GUILD_ID!);
+        const member = await guild.members.fetch(discordId);
+        await member.roles.add(process.env.DISCORD_PREMIUM_ROLE_ID!);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        console.error("Discord role assignment error:", msg);
+        // Se vuoi che Stripe ritenti: 
+        // return NextResponse.json({ error: "Failed to assign Discord role" }, { status: 500 });
+      }
     }
   }
 
-  return NextResponse.json({ received: true });
+  // Qui puoi gestire altri tipi di eventi se serve.
+
+  return NextResponse.json({ received: true }, { status: 200 });
+}
