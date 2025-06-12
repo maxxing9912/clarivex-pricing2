@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return new Response(JSON.stringify({ error: "Missing discordId" }), { status: 400 });
   }
 
-  const origin = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const origin = process.env.NEXTAUTH_URL || "https://clarivex-pricing2.vercel.app/";
 
   try {
     const session = await stripe.checkout.sessions.create({
