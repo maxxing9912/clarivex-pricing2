@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
     DISCORD_CLIENT_SECRET: "r-4-RqKenXJET83zteNpBkbVFqan9BCy",
     NEXTAUTH_URL: "http://localhost:3000/",
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
-      "pk_live_51RTquJGjdxMu1OKbBZaOIuS8IEV9EDYyAcaT2yCmdGXtzXpx4Vlhb0Vmye9E2EqoIa9j5zP5GWY0ahJXhKc5VAa400ZWwV02YU",
+      "pk_test_51RTquJGjdxMu1OKbOXLmErQAVDy7416CN8lraiP2YsPNH4ufZUFgNiuuQkNRNtnqyyc8hXG02rYYnNVJEm5uH1Re00pOIg6RO2",
+  },
+  images: {
+    domains: ["cdn.discordapp.com"],
   },
   webpack(
     config: any,
