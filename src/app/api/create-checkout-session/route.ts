@@ -56,19 +56,21 @@ export async function POST(request: Request) {
   try {
     // plan is now keyof PLAN_CONFIG
     const config = PLAN_CONFIG[plan];
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: config.mode,
-      line_items: [
-        {
-          price_data: config.price_data,
-          quantity: 1,
-        },
-      ],
-      metadata: { discordId, plan },
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
-      cancel_url: `${origin}/pricing`,
-    });
+    const session = await stripe.checkout.sessions.create(
+      {
+        payment_method_types: ["card"],
+        mode: config.mode,
+        line_items: [
+          {
+            price_data: config.price_data,
+            quantity: 1,
+          },
+        ],
+        metadata: { discordId, plan },
+        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
+        cancel_url: `${origin}/pricing`,
+      } as Stripe.Checkout.SessionCreateParams
+    );
 
     return NextResponse.json({ sessionId: session.id });
   } catch (err) {
