@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
 import AOS from "aos";
@@ -28,7 +29,7 @@ export default function PricingPage() {
     })
       .then(res => res.json())
       .then(data => {
-        setPlan(data.plan as PlanType || 'free');
+        setPlan((data.plan as PlanType) || 'free');
       })
       .catch(() => setPlan('free'));
   }, [session]);
@@ -41,7 +42,8 @@ export default function PricingPage() {
       '€3.99 per month subscription.',
       'Lifetime access only €34.99.',
     ];
-    let wi = 0, ci = 0, del = false, timeout: NodeJS.Timeout;
+    let wi = 0, ci = 0, del = false;    
+    let timeout: ReturnType<typeof setTimeout>;
     const tick = () => {
       const full = words[wi];
       if (!del) {
@@ -81,8 +83,9 @@ export default function PricingPage() {
       const { sessionId } = await res.json();
       const stripe = await loadStripe(stripePublicKey);
       await stripe!.redirectToCheckout({ sessionId });
-    } catch (e: any) {
-      alert(e.message || 'Something went wrong.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Something went wrong.';
+      alert(message);
     }
   };
 
@@ -90,9 +93,11 @@ export default function PricingPage() {
     <main className="font-sans bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       {/* NAVBAR */}
       <nav className="bg-indigo-700 text-white p-4">
-        <a href="/" className="text-lg font-bold hover:underline">
-          Clarivex
-        </a>
+        <Link href="/">
+          <span className="text-lg font-bold hover:underline cursor-pointer">
+            Clarivex
+          </span>
+        </Link>
       </nav>
 
       {/* HERO */}
