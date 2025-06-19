@@ -1,8 +1,9 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./api/providers";
-import AuthStatus from "./api/AuthStatus"; // lo mettiamo qui per non duplicare
+import AuthStatus from "./api/AuthStatus";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,14 +22,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <header className="sticky top-0 backdrop-blur bg-white/80 z-20 shadow-sm">
             <div className="container mx-auto flex items-center justify-between px-6 py-4 max-w-6xl">
-              <h1 className="text-2xl font-extrabold">Clarivex</h1>
+              <Link href="/">
+                <span className="text-2xl font-extrabold cursor-pointer hover:underline">
+                  Clarivex
+                </span>
+              </Link>
               <AuthStatus />
             </div>
           </header>
