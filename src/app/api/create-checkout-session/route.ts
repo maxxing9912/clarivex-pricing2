@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const origin = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const origin = process.env.NEXTAUTH_URL ?? "https://clarivex-pricing2-61a4qeaad-maxxing9912s-projects.vercel.app/";
 
   try {
     // plan is now keyof PLAN_CONFIG
