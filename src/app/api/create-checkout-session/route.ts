@@ -35,13 +35,16 @@ const PLAN_CONFIG = {
   },
 };
 
-export async function POST(request: Request) {
-  const { discordId, plan } = (await request.json()) as {
-    discordId?: string;
-    plan?: keyof typeof PLAN_CONFIG;
-  };
+type PlanKey = keyof typeof PLAN_CONFIG;
 
-  if (!discordId || !(plan in PLAN_CONFIG)) {
+export async function POST(request: Request) {
+  const body = (await request.json()) as {
+    discordId?: string;
+    plan?: PlanKey;
+  };
+  const { discordId, plan } = body;
+
+  if (!discordId || !plan || !(plan in PLAN_CONFIG)) {
     return NextResponse.json(
       { error: "Missing or invalid discordId or plan" },
       { status: 400 }
@@ -51,14 +54,14 @@ export async function POST(request: Request) {
   const origin = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
   try {
-    const { mode, price_data } = PLAN_CONFIG[plan];
-
+    // plan is now keyof PLAN_CONFIG
+    const config = PLAN_CONFIG[plan];
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      mode,
+      mode: config.mode,
       line_items: [
         {
-          price_data,
+          price_data: config.price_data,
           quantity: 1,
         },
       ],
