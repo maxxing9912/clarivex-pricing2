@@ -14,12 +14,14 @@ type PlanType = "free" | "monthly" | "annual" | "lifetime";
 export default function PricingPage() {
   const { data: session } = useSession();
   const [plan, setPlan] = useState<PlanType>("free");
+  const [loaded, setLoaded] = useState(false); // loading state
   const typewriterRef = useRef<HTMLSpanElement>(null);
 
   // Check subscription status
   useEffect(() => {
     if (!session?.user?.id) {
       setPlan("free");
+      setLoaded(true);
       return;
     }
     fetch("/api/premium-status", {
@@ -31,8 +33,18 @@ export default function PricingPage() {
       .then((data) => {
         setPlan(data.plan as PlanType);
       })
-      .catch(() => setPlan("free"));
+      .catch(() => setPlan("free"))
+      .finally(() => setLoaded(true)); // mark as loaded
   }, [session]);
+
+  // If still loading, show placeholder
+  if (!loaded) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-gray-100">
+        <p>Caricamento piano in corso…</p>
+      </main>
+    );
+  }
 
   // Typewriter animation
   useEffect(() => {
