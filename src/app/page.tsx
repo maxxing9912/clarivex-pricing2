@@ -14,7 +14,7 @@ type PlanType = "free" | "monthly" | "annual" | "lifetime";
 export default function PricingPage() {
   const { data: session } = useSession();
   const [plan, setPlan] = useState<PlanType>("free");
-  const [loaded, setLoaded] = useState(false); // loading state
+  const [loaded, setLoaded] = useState(false);
   const typewriterRef = useRef<HTMLSpanElement>(null);
 
   // Check subscription status
@@ -34,17 +34,8 @@ export default function PricingPage() {
         setPlan(data.plan as PlanType);
       })
       .catch(() => setPlan("free"))
-      .finally(() => setLoaded(true)); // mark as loaded
+      .finally(() => setLoaded(true));
   }, [session]);
-
-  // If still loading, show placeholder
-  if (!loaded) {
-    return (
-      <main className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p>Caricamento piano in corso…</p>
-      </main>
-    );
-  }
 
   // Typewriter animation
   useEffect(() => {
@@ -86,7 +77,6 @@ export default function PricingPage() {
   const createCheckoutSession = async (selectedPlan: PlanType) => {
     if (!session) return signIn("discord");
     if (plan === selectedPlan) return alert("You already have this plan.");
-
     try {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -102,6 +92,15 @@ export default function PricingPage() {
       alert(msg);
     }
   };
+
+  // Show loading placeholder until plan is fetched
+  if (!loaded) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-gray-100">
+        <p>Caricamento piano in corso…</p>
+      </main>
+    );
+  }
 
   return (
     <main className="font-sans bg-gray-100 text-gray-900 min-h-screen flex flex-col">
