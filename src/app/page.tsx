@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
 import AOS from "aos";
@@ -17,22 +16,24 @@ export default function PricingPage() {
   const typewriterRef = useRef<HTMLSpanElement>(null);
 
   // Check subscription status
-  useEffect(() => {
-    if (!session?.user?.id) {
-      setPlan("free");
-      return;
-    }
-    fetch('/api/premium-status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ discordId: session.user.id }),
+  // nel tuo useEffect di controllo:
+useEffect(() => {
+  if (!session?.user?.id) {
+    setPlan("free");
+    return;
+  }
+  fetch('/api/premium-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId: session.user.id }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      // ora data.plan è "free"|"monthly"|"annual"|"lifetime"
+      setPlan(data.plan as PlanType);
     })
-      .then(res => res.json())
-      .then(data => {
-        setPlan((data.plan as PlanType) || 'free');
-      })
-      .catch(() => setPlan('free'));
-  }, [session]);
+    .catch(() => setPlan('free'));
+}, [session]);
 
   // Typewriter animation
   useEffect(() => {
@@ -42,8 +43,7 @@ export default function PricingPage() {
       '€3.99 per month subscription.',
       'Lifetime access only €34.99.',
     ];
-    let wi = 0, ci = 0, del = false;    
-    let timeout: ReturnType<typeof setTimeout>;
+    let wi = 0, ci = 0, del = false, timeout: NodeJS.Timeout;
     const tick = () => {
       const full = words[wi];
       if (!del) {
@@ -83,9 +83,8 @@ export default function PricingPage() {
       const { sessionId } = await res.json();
       const stripe = await loadStripe(stripePublicKey);
       await stripe!.redirectToCheckout({ sessionId });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Something went wrong.';
-      alert(message);
+    } catch (e: any) {
+      alert(e.message || 'Something went wrong.');
     }
   };
 
@@ -93,11 +92,9 @@ export default function PricingPage() {
     <main className="font-sans bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       {/* NAVBAR */}
       <nav className="bg-indigo-700 text-white p-4">
-        <Link href="/">
-          <span className="text-lg font-bold hover:underline cursor-pointer">
-            Clarivex
-          </span>
-        </Link>
+        <a href="/" className="text-lg font-bold hover:underline">
+          Clarivex
+        </a>
       </nav>
 
       {/* HERO */}
