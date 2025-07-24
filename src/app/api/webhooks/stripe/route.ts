@@ -118,9 +118,13 @@ export default function PricingPage() {
             title="Free"
             priceTop="€0"
             priceBottom="forever"
-            features={["Basic Moderation", "Community Events Access", "Community Support"]}
-            selected={plan === 'free'}
-            onSelect={() => alert('Free plan selected')}
+            features={[
+              "Basic Moderation",
+              "Community Events Access",
+              "Community Support",
+            ]}
+            selected={plan === "free"}
+            onSelect={() => alert("Free plan selected")}
             badge={null}
             buttonLabel="Current Plan"
             disabled
@@ -131,11 +135,15 @@ export default function PricingPage() {
             title="Monthly"
             priceTop="€3.99"
             priceBottom="/month"
-            features={["All features unlocked", "Priority Queue for Feature Requests", "Priority Support"]}
-            selected={plan === 'monthly'}
-            onSelect={() => createCheckoutSession('monthly')}
-            badge={{ text: 'Most Popular', color: 'bg-yellow-200 text-yellow-800' }}
-            buttonLabel={plan === 'monthly' ? 'Current Plan' : 'Choose Monthly'}
+            features={[
+              "All features unlocked",
+              "Priority Queue for Feature Requests",
+              "Priority Support",
+            ]}
+            selected={plan === "monthly"}
+            onSelect={() => createCheckoutSession("monthly")}
+            badge={{ text: "Most Popular", color: "bg-yellow-200 text-yellow-800" }}
+            buttonLabel={plan === "monthly" ? "Current Plan" : "Choose Monthly"}
           />
 
           {/* ANNUAL */}
@@ -144,11 +152,16 @@ export default function PricingPage() {
             priceTop="€29.99"
             priceBottom="/year"
             subtitle="Save 38% compared to monthly"
-            features={["All features unlocked", "Discounts on merchandising", "Priority Support", "More chances to win in a giveaway"]}
-            selected={plan === 'annual'}
-            onSelect={() => createCheckoutSession('annual')}
-            badge={{ text: 'Best Value', color: 'bg-gray-200 text-gray-700' }}
-            buttonLabel={plan === 'annual' ? 'Current Plan' : 'Choose Annual'}
+            features={[
+              "All features unlocked",
+              "Discounts on merchandising",
+              "Priority Support",
+              "More chances to win in a giveaway",
+            ]}
+            selected={plan === "annual"}
+            onSelect={() => createCheckoutSession("annual")}
+            badge={{ text: "Best Value", color: "bg-gray-200 text-gray-700" }}
+            buttonLabel={plan === "annual" ? "Current Plan" : "Choose Annual"}
           />
 
           {/* LIFETIME */}
@@ -158,11 +171,16 @@ export default function PricingPage() {
             priceTopLineStrikethrough
             priceTop="€34.99"
             priceBottom="once"
-            features={["All features unlocked forever", "A new custom command", "Lifetime & Early Access Roles", "All the features of the previous plans"]}
-            selected={plan === 'lifetime'}
-            onSelect={() => createCheckoutSession('lifetime')}
-            badge={{ text: 'Limited Offer', color: 'bg-red-200 text-red-800' }}
-            buttonLabel={plan === 'lifetime' ? 'Current Plan' : 'Choose Lifetime'}
+            features={[
+              "All features unlocked forever",
+              "A new custom command",
+              "Lifetime & Early Access Roles",
+              "All the features of the previous plans",
+            ]}
+            selected={plan === "lifetime"}
+            onSelect={() => createCheckoutSession("lifetime")}
+            badge={{ text: "Limited Offer", color: "bg-red-200 text-red-800" }}
+            buttonLabel={plan === "lifetime" ? "Current Plan" : "Choose Lifetime"}
           />
         </div>
       </section>
@@ -188,7 +206,7 @@ function PlanCard({
   onSelect,
   badge,
   buttonLabel,
-  disabled
+  disabled,
 }: {
   title: string;
   priceTop: string;
@@ -207,20 +225,28 @@ function PlanCard({
     <div
       data-aos="zoom-in"
       className={`bg-white border rounded-xl shadow-md p-6 text-center transition cursor-pointer ${
-        selected ? 'ring-2 ring-offset-2 ring-indigo-500' : 'border-gray-200'
+        selected ? "ring-2 ring-offset-2 ring-indigo-500" : "border-gray-200"
       }`}
       onClick={() => !disabled && onSelect()}
     >
       {badge && (
-        <div className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${badge.color}`}>
+        <div
+          className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${
+            badge.color
+          }`}
+        >
           {badge.text}
         </div>
       )}
       <h3 className="text-2xl font-bold mb-2">{title}</h3>
       {priceTopLine && (
-        <p className={`text-sm text-gray-500 mb-1 ${
-          priceTopLineStrikethrough ? 'line-through' : ''
-        }`}>{priceTopLine}</p>
+        <p
+          className={`text-sm text-gray-500 mb-1 ${
+            priceTopLineStrikethrough ? "line-through" : ""
+          }`}
+        >
+          {priceTopLine}
+        </p>
       )}
       <p className="text-3xl font-bold mb-1">
         {priceTop}
@@ -237,8 +263,8 @@ function PlanCard({
         disabled={disabled}
         className={`w-full py-2 px-4 font-semibold rounded-full transition ${
           disabled
-            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+            : "bg-indigo-600 text-white hover:bg-indigo-700"
         }`}
       >
         {buttonLabel}
