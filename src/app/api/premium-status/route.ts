@@ -11,12 +11,10 @@ const ROLE_PLAN_MAP: Record<string, "lifetime" | "monthly" | "annual"> = {
 let client: Client | null = null;
 async function getClient(): Promise<Client> {
   if (client && client.isReady()) return client;
-
   client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
   });
   await client.login(process.env.DISCORD_BOT_TOKEN!);
-
   if (!client.isReady()) {
     await once(client, "ready");
   }
@@ -30,45 +28,40 @@ export async function POST(req: Request): Promise<Response> {
       return new Response("Missing discordId", { status: 400 });
     }
 
-    // 1) Prima controllo rapido sui premiumUsers.json (webhook)
+    // 1) Controllo JSON Stripe-webhook
     const premiumUsers = await readPremiumUsers();
     if (premiumUsers[discordId]) {
-      return new Response(
-        JSON.stringify({ plan: "lifetime" }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      console.log(`User ${discordId} trovato in premiumUsers.json → lifetime`);
+      return new Response(JSON.stringify({ plan: "lifetime" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // 2) Altrimenti, fetch dei ruoli su Discord
+    // 2) Altrimenti, fetch ruoli Discord
     const discord = await getClient();
     const guild = await discord.guilds.fetch(process.env.DISCORD_GUILD_ID!);
     const member = await guild.members.fetch(discordId);
 
     for (const [roleId, plan] of Object.entries(ROLE_PLAN_MAP)) {
       if (member.roles.cache.has(roleId)) {
-        return new Response(
-          JSON.stringify({ plan }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        console.log(`User ${discordId} ha ruolo ${plan}`);
+        return new Response(JSON.stringify({ plan }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
       }
     }
 
     // 3) Default free
-    return new Response(
-      JSON.stringify({ plan: "free" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    console.log(`User ${discordId} nessun ruolo → free`);
+    return new Response(JSON.stringify({ plan: "free" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
   } catch (e) {
-    console.error("Error fetching premium status:", e);
+    console.error("Errore in premium-status:", e);
     return new Response("Internal server error", { status: 500 });
   }
 }
