@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 
-const PREMIUM_DB_PATH = path.resolve("./premiumUsers.json");
+const PREMIUM_DB_PATH = path.resolve(process.cwd(), "premiumUsers.json");
 
 /**
  * Restituisce la mappa { discordId: true } creata dal webhook Stripe
