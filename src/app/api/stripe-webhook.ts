@@ -1,7 +1,5 @@
-// src/app/api/stripe-webhook.ts
 import Stripe from "stripe";
-import fs from "fs/promises";
-import path from "path";
+import { readPremiumUsers, writePremiumUsers } from "@/lib/premium-db";
 
 export const config = { api: { bodyParser: false } };
 
@@ -9,22 +7,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-05-28.basil",
 });
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-const PREMIUM_DB_PATH = path.resolve("./premiumUsers.json");
 
-async function readPremiumUsers(): Promise<Record<string, boolean>> {
-  try {
-    const data = await fs.readFile(PREMIUM_DB_PATH, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return {};
-  }
-}
-
-async function writePremiumUsers(data: Record<string, boolean>) {
-  await fs.writeFile(PREMIUM_DB_PATH, JSON.stringify(data, null, 2), "utf-8");
-}
-
-// Buffer reader for Next.js Request
+// Helper per leggere il raw body in Next.js 13+
 async function getRawBody(req: Request): Promise<Buffer> {
   const arrayBuffer = await req.arrayBuffer();
   return Buffer.from(arrayBuffer);
