@@ -9,6 +9,14 @@ const stripePublicKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
 
 type PlanType = "free" | "monthly" | "annual" | "lifetime";
 
+// Definisce l'ordine dei piani
+const PLAN_RANK: Record<PlanType, number> = {
+  free: 0,
+  monthly: 1,
+  annual: 2,
+  lifetime: 3,
+};
+
 export default function PricingPage() {
   const { data: session } = useSession();
   const [plan, setPlan] = useState<PlanType>("free");
@@ -44,8 +52,8 @@ export default function PricingPage() {
     ];
     let wi = 0,
       ci = 0,
-      deleting = false,
-      timeout: NodeJS.Timeout;
+      deleting = false;
+    let timeout: NodeJS.Timeout;
 
     const frame = () => {
       if (!el) return;
@@ -76,10 +84,6 @@ export default function PricingPage() {
   // 3) Checkout Stripe
   const createCheckoutSession = async (selectedPlan: PlanType) => {
     if (!session) return signIn("discord");
-    if (plan === selectedPlan) {
-      alert("You already have this plan.");
-      return;
-    }
     try {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -95,7 +99,7 @@ export default function PricingPage() {
     }
   };
 
-  // 4) Loading placeholder
+  // 4) Placeholder di caricamento
   if (!loaded) {
     return (
       <main className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -104,7 +108,57 @@ export default function PricingPage() {
     );
   }
 
-  // 5) Main render
+  // rank del piano corrente
+  const currentRank = PLAN_RANK[plan];
+
+  // configurazione piani
+  const plans: Array<{
+    key: PlanType;
+    title: string;
+    priceTop: string;
+    priceBottom?: string;
+    priceTopLine?: string;
+    priceTopLineStrikethrough?: boolean;
+    subtitle?: string;
+    features: string[];
+    badge?: { text: string; color: string };
+  }> = [
+    {
+      key: "free",
+      title: "Free",
+      priceTop: "€0",
+      priceBottom: "forever",
+      features: ["Basic Moderation", "Community Events Access", "Community Support"],
+    },
+    {
+      key: "monthly",
+      title: "Monthly",
+      priceTop: "€3.99",
+      priceBottom: "/month",
+      features: ["All features unlocked", "Priority Queue for Feature Requests", "Priority Support"],
+      badge: { text: "Most Popular", color: "bg-yellow-200 text-yellow-800" },
+    },
+    {
+      key: "annual",
+      title: "Annual",
+      priceTop: "€29.99",
+      priceBottom: "/year",
+      subtitle: "Save 38% compared to monthly",
+      features: ["All features unlocked", "Discounts on merchandising", "Priority Support", "More chances to win in a giveaway"],
+      badge: { text: "Best Value", color: "bg-gray-200 text-gray-700" },
+    },
+    {
+      key: "lifetime",
+      title: "Lifetime",
+      priceTopLine: "€69.99",
+      priceTopLineStrikethrough: true,
+      priceTop: "€34.99",
+      priceBottom: "once",
+      features: ["All features unlocked forever", "A new custom command", "Lifetime & Early Access Roles", "All the features of the previous plans"],
+      badge: { text: "Limited Offer", color: "bg-red-200 text-red-800" },
+    },
+  ];
+
   return (
     <main className="font-sans bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       {/* NAVBAR */}
@@ -127,77 +181,33 @@ export default function PricingPage() {
       {/* PLANS */}
       <section className="bg-white py-20 flex-1">
         <div className="container mx-auto max-w-5xl grid md:grid-cols-4 gap-8 px-6">
-          <PlanCard
-            title="Free"
-            priceTop="€0"
-            priceBottom="forever"
-            features={[
-              "Basic Moderation",
-              "Community Events Access",
-              "Community Support",
-            ]}
-            selected={plan === "free"}
-            onSelect={() => alert("Free plan selected")}
-            badge={null}
-            buttonLabel="Current Plan"
-            disabled
-          />
+          {plans.map((p) => {
+            const rank = PLAN_RANK[p.key];
+            const isCurrent = p.key === plan;
+            const disabled = rank <= currentRank && !isCurrent;
+            let buttonLabel: string;
+            if (isCurrent) buttonLabel = "Current Plan";
+            else if (rank > currentRank) buttonLabel = `Choose ${p.title}`;
+            else buttonLabel = "";
 
-          <PlanCard
-            title="Monthly"
-            priceTop="€3.99"
-            priceBottom="/month"
-            features={[
-              "All features unlocked",
-              "Priority Queue for Feature Requests",
-              "Priority Support",
-            ]}
-            selected={plan === "monthly"}
-            onSelect={() => createCheckoutSession("monthly")}
-            badge={{ text: "Most Popular", color: "bg-yellow-200 text-yellow-800" }}
-            buttonLabel={
-              plan === "monthly" ? "Current Plan" : "Choose Monthly"
-            }
-          />
-
-          <PlanCard
-            title="Annual"
-            priceTop="€29.99"
-            priceBottom="/year"
-            subtitle="Save 38% compared to monthly"
-            features={[
-              "All features unlocked",
-              "Discounts on merchandising",
-              "Priority Support",
-              "More chances to win in a giveaway",
-            ]}
-            selected={plan === "annual"}
-            onSelect={() => createCheckoutSession("annual")}
-            badge={{ text: "Best Value", color: "bg-gray-200 text-gray-700" }}
-            buttonLabel={
-              plan === "annual" ? "Current Plan" : "Choose Annual"
-            }
-          />
-
-          <PlanCard
-            title="Lifetime"
-            priceTopLine="€69.99"
-            priceTopLineStrikethrough
-            priceTop="€34.99"
-            priceBottom="once"
-            features={[
-              "All features unlocked forever",
-              "A new custom command",
-              "Lifetime & Early Access Roles",
-              "All the features of the previous plans",
-            ]}
-            selected={plan === "lifetime"}
-            onSelect={() => createCheckoutSession("lifetime")}
-            badge={{ text: "Limited Offer", color: "bg-red-200 text-red-800" }}
-            buttonLabel={
-              plan === "lifetime" ? "Current Plan" : "Choose Lifetime"
-            }
-          />
+            return (
+              <PlanCard
+                key={p.key}
+                title={p.title}
+                priceTop={p.priceTop}
+                priceBottom={p.priceBottom}
+                priceTopLine={p.priceTopLine}
+                priceTopLineStrikethrough={p.priceTopLineStrikethrough}
+                subtitle={p.subtitle}
+                features={p.features}
+                selected={isCurrent}
+                onSelect={() => createCheckoutSession(p.key)}
+                badge={p.badge ?? null}
+                buttonLabel={buttonLabel}
+                disabled={disabled}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -244,41 +254,25 @@ function PlanCard({
       onClick={() => !disabled && onSelect()}
     >
       {badge && (
-        <div
-          className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${badge.color}`}
-        >
+        <div className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${badge.color}`}>
           {badge.text}
         </div>
       )}
       <h3 className="text-2xl font-bold mb-2">{title}</h3>
       {priceTopLine && (
-        <p
-          className={`text-sm text-gray-500 mb-1 ${
-            priceTopLineStrikethrough ? "line-through" : ""
-          }`}
-        >
-          {priceTopLine}
-        </p>
+        <p className={`text-sm text-gray-500 mb-1 ${priceTopLineStrikethrough ? "line-through" : ""}`}>{priceTopLine}</p>
       )}
       <p className="text-3xl font-bold mb-1">
         {priceTop}
         {priceBottom && <span className="text-sm">{priceBottom}</span>}
       </p>
-      {subtitle && (
-        <p className="text-sm text-gray-500 mb-4">{subtitle}</p>
-      )}
-      <ul className="space-y-1 text-sm mb-6">
-        {features.map((f, i) => (
-          <li key={i}>{f}</li>
-        ))}
-      </ul>
+      {subtitle && <p className="text-sm text-gray-500 mb-4">{subtitle}</p>}
+      <ul className="space-y-1 text-sm mb-6">{features.map((f, i) => (<li key={i}>{f}</li>))}</ul>
       <button
         onClick={onSelect}
         disabled={disabled}
         className={`w-full py-2 px-4 font-semibold rounded-full transition ${
-          disabled
-            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-            : "bg-indigo-600 text-white hover:bg-indigo-700"
+          disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700"
         }`}
       >
         {buttonLabel}
