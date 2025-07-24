@@ -3,7 +3,7 @@ import path from "path";
 
 const PREMIUM_DB_PATH = path.resolve("./premiumUsers.json");
 
-async function readPremiumUsers(): Promise<Record<string, boolean>> {
+async function readPremiumUsers(): Promise<Record<string, string>> {
   try {
     const data = await fs.readFile(PREMIUM_DB_PATH, "utf-8");
     return JSON.parse(data);
@@ -19,9 +19,9 @@ export async function POST(req: Request) {
   }
 
   const premiumUsers = await readPremiumUsers();
-  const hasPremium = !!premiumUsers[discordId];
+  const plan = (premiumUsers[discordId] as "free"|"monthly"|"annual"|"lifetime") || "free";
 
-  return new Response(JSON.stringify({ hasPremium }), {
+  return new Response(JSON.stringify({ plan }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
