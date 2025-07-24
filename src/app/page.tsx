@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
+import Link from "next/link";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { loadStripe } from "@stripe/stripe-js";
@@ -16,34 +17,35 @@ export default function PricingPage() {
   const typewriterRef = useRef<HTMLSpanElement>(null);
 
   // Check subscription status
-  // nel tuo useEffect di controllo:
-useEffect(() => {
-  if (!session?.user?.id) {
-    setPlan("free");
-    return;
-  }
-  fetch('/api/premium-status', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ discordId: session.user.id }),
-  })
-    .then(res => res.json())
-    .then(data => {
-      // ora data.plan è "free"|"monthly"|"annual"|"lifetime"
-      setPlan(data.plan as PlanType);
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setPlan("free");
+      return;
+    }
+    fetch("/api/premium-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discordId: session.user.id }),
     })
-    .catch(() => setPlan('free'));
-}, [session]);
+      .then((res) => res.json())
+      .then((data) => {
+        setPlan(data.plan as PlanType);
+      })
+      .catch(() => setPlan("free"));
+  }, [session]);
 
   // Typewriter animation
   useEffect(() => {
-    AOS.init({ once: true, duration: 1000, easing: 'ease-out-back' });
+    AOS.init({ once: true, duration: 1000, easing: "ease-out-back" });
     const words = [
-      'Free, Monthly, Annual & Lifetime.',
-      '€3.99 per month subscription.',
-      'Lifetime access only €34.99.',
+      "Free, Monthly, Annual & Lifetime.",
+      "€3.99 per month subscription.",
+      "Lifetime access only €34.99.",
     ];
-    let wi = 0, ci = 0, del = false, timeout: NodeJS.Timeout;
+    let wi = 0,
+      ci = 0,
+      del = false,
+      timeout: NodeJS.Timeout;
     const tick = () => {
       const full = words[wi];
       if (!del) {
@@ -70,21 +72,22 @@ useEffect(() => {
 
   // Stripe checkout
   const createCheckoutSession = async (selectedPlan: PlanType) => {
-    if (!session) return signIn('discord');
-    if (plan === selectedPlan) return alert('You already have this plan.');
+    if (!session) return signIn("discord");
+    if (plan === selectedPlan) return alert("You already have this plan.");
 
     try {
-      const res = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discordId: session.user.id, plan: selectedPlan }),
       });
-      if (!res.ok) throw new Error('Failed to create session');
+      if (!res.ok) throw new Error("Failed to create session");
       const { sessionId } = await res.json();
       const stripe = await loadStripe(stripePublicKey);
       await stripe!.redirectToCheckout({ sessionId });
-    } catch (e: any) {
-      alert(e.message || 'Something went wrong.');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Something went wrong.";
+      alert(msg);
     }
   };
 
@@ -92,9 +95,9 @@ useEffect(() => {
     <main className="font-sans bg-gray-100 text-gray-900 min-h-screen flex flex-col">
       {/* NAVBAR */}
       <nav className="bg-indigo-700 text-white p-4">
-        <a href="/" className="text-lg font-bold hover:underline">
+        <Link href="/" className="text-lg font-bold hover:underline">
           Clarivex
-        </a>
+        </Link>
       </nav>
 
       {/* HERO */}
@@ -115,9 +118,13 @@ useEffect(() => {
             title="Free"
             priceTop="€0"
             priceBottom="forever"
-            features={["Basic Moderation", "Community Events Access", "Community Support"]}
-            selected={plan === 'free'}
-            onSelect={() => alert('Free plan selected')}
+            features={[
+              "Basic Moderation",
+              "Community Events Access",
+              "Community Support",
+            ]}
+            selected={plan === "free"}
+            onSelect={() => alert("Free plan selected")}
             badge={null}
             buttonLabel="Current Plan"
             disabled
@@ -128,11 +135,15 @@ useEffect(() => {
             title="Monthly"
             priceTop="€3.99"
             priceBottom="/month"
-            features={["All features unlocked", "Priority Queue for Feature Requests", "Priority Support"]}
-            selected={plan === 'monthly'}
-            onSelect={() => createCheckoutSession('monthly')}
-            badge={{ text: 'Most Popular', color: 'bg-yellow-200 text-yellow-800' }}
-            buttonLabel={plan === 'monthly' ? 'Current Plan' : 'Choose Monthly'}
+            features={[
+              "All features unlocked",
+              "Priority Queue for Feature Requests",
+              "Priority Support",
+            ]}
+            selected={plan === "monthly"}
+            onSelect={() => createCheckoutSession("monthly")}
+            badge={{ text: "Most Popular", color: "bg-yellow-200 text-yellow-800" }}
+            buttonLabel={plan === "monthly" ? "Current Plan" : "Choose Monthly"}
           />
 
           {/* ANNUAL */}
@@ -141,11 +152,16 @@ useEffect(() => {
             priceTop="€29.99"
             priceBottom="/year"
             subtitle="Save 38% compared to monthly"
-            features={["All features unlocked", "Discounts on merchandising", "Priority Support", "More chances to win in a giveaway"]}
-            selected={plan === 'annual'}
-            onSelect={() => createCheckoutSession('annual')}
-            badge={{ text: 'Best Value', color: 'bg-gray-200 text-gray-700' }}
-            buttonLabel={plan === 'annual' ? 'Current Plan' : 'Choose Annual'}
+            features={[
+              "All features unlocked",
+              "Discounts on merchandising",
+              "Priority Support",
+              "More chances to win in a giveaway",
+            ]}
+            selected={plan === "annual"}
+            onSelect={() => createCheckoutSession("annual")}
+            badge={{ text: "Best Value", color: "bg-gray-200 text-gray-700" }}
+            buttonLabel={plan === "annual" ? "Current Plan" : "Choose Annual"}
           />
 
           {/* LIFETIME */}
@@ -155,11 +171,16 @@ useEffect(() => {
             priceTopLineStrikethrough
             priceTop="€34.99"
             priceBottom="once"
-            features={["All features unlocked forever", "A new custom command", "Lifetime & Early Access Roles", "All the features of the previous plans"]}
-            selected={plan === 'lifetime'}
-            onSelect={() => createCheckoutSession('lifetime')}
-            badge={{ text: 'Limited Offer', color: 'bg-red-200 text-red-800' }}
-            buttonLabel={plan === 'lifetime' ? 'Current Plan' : 'Choose Lifetime'}
+            features={[
+              "All features unlocked forever",
+              "A new custom command",
+              "Lifetime & Early Access Roles",
+              "All the features of the previous plans",
+            ]}
+            selected={plan === "lifetime"}
+            onSelect={() => createCheckoutSession("lifetime")}
+            badge={{ text: "Limited Offer", color: "bg-red-200 text-red-800" }}
+            buttonLabel={plan === "lifetime" ? "Current Plan" : "Choose Lifetime"}
           />
         </div>
       </section>
@@ -185,7 +206,7 @@ function PlanCard({
   onSelect,
   badge,
   buttonLabel,
-  disabled
+  disabled,
 }: {
   title: string;
   priceTop: string;
@@ -204,7 +225,7 @@ function PlanCard({
     <div
       data-aos="zoom-in"
       className={`bg-white border rounded-xl shadow-md p-6 text-center transition cursor-pointer ${
-        selected ? 'ring-2 ring-offset-2 ring-indigo-500' : 'border-gray-200'
+        selected ? "ring-2 ring-offset-2 ring-indigo-500" : "border-gray-200"
       }`}
       onClick={() => !disabled && onSelect()}
     >
@@ -215,9 +236,13 @@ function PlanCard({
       )}
       <h3 className="text-2xl font-bold mb-2">{title}</h3>
       {priceTopLine && (
-        <p className={`text-sm text-gray-500 mb-1 ${
-          priceTopLineStrikethrough ? 'line-through' : ''
-        }`}>{priceTopLine}</p>
+        <p
+          className={`text-sm text-gray-500 mb-1 ${
+            priceTopLineStrikethrough ? "line-through" : ""
+          }`}
+        >
+          {priceTopLine}
+        </p>
       )}
       <p className="text-3xl font-bold mb-1">
         {priceTop}
@@ -234,8 +259,8 @@ function PlanCard({
         disabled={disabled}
         className={`w-full py-2 px-4 font-semibold rounded-full transition ${
           disabled
-            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+            : "bg-indigo-600 text-white hover:bg-indigo-700"
         }`}
       >
         {buttonLabel}
