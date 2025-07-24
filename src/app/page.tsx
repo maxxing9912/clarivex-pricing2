@@ -77,6 +77,7 @@ export default function PricingPage() {
   const createCheckoutSession = async (selectedPlan: PlanType) => {
     if (!session) return signIn("discord");
     if (plan === selectedPlan) return alert("You already have this plan.");
+
     try {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -129,11 +130,7 @@ export default function PricingPage() {
             title="Free"
             priceTop="€0"
             priceBottom="forever"
-            features={[
-              "Basic Moderation",
-              "Community Events Access",
-              "Community Support",
-            ]}
+            features={["Basic Moderation", "Community Events Access", "Community Support"]}
             selected={plan === "free"}
             onSelect={() => alert("Free plan selected")}
             badge={null}
@@ -146,11 +143,7 @@ export default function PricingPage() {
             title="Monthly"
             priceTop="€3.99"
             priceBottom="/month"
-            features={[
-              "All features unlocked",
-              "Priority Queue for Feature Requests",
-              "Priority Support",
-            ]}
+            features={["All features unlocked", "Priority Queue for Feature Requests", "Priority Support"]}
             selected={plan === "monthly"}
             onSelect={() => createCheckoutSession("monthly")}
             badge={{ text: "Most Popular", color: "bg-yellow-200 text-yellow-800" }}
@@ -163,12 +156,7 @@ export default function PricingPage() {
             priceTop="€29.99"
             priceBottom="/year"
             subtitle="Save 38% compared to monthly"
-            features={[
-              "All features unlocked",
-              "Discounts on merchandising",
-              "Priority Support",
-              "More chances to win in a giveaway",
-            ]}
+            features={["All features unlocked", "Discounts on merchandising", "Priority Support", "More chances to win in a giveaway"]}
             selected={plan === "annual"}
             onSelect={() => createCheckoutSession("annual")}
             badge={{ text: "Best Value", color: "bg-gray-200 text-gray-700" }}
@@ -182,12 +170,7 @@ export default function PricingPage() {
             priceTopLineStrikethrough
             priceTop="€34.99"
             priceBottom="once"
-            features={[
-              "All features unlocked forever",
-              "A new custom command",
-              "Lifetime & Early Access Roles",
-              "All the features of the previous plans",
-            ]}
+            features={["All features unlocked forever", "A new custom command", "Lifetime & Early Access Roles", "All the features of the previous plans"]}
             selected={plan === "lifetime"}
             onSelect={() => createCheckoutSession("lifetime")}
             badge={{ text: "Limited Offer", color: "bg-red-200 text-red-800" }}
