@@ -230,21 +230,13 @@ function PlanCard({
       onClick={() => !disabled && onSelect()}
     >
       {badge && (
-        <div
-          className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${
-            badge.color
-          }`}
-        >
+        <div className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${badge.color}`}>
           {badge.text}
         </div>
       )}
       <h3 className="text-2xl font-bold mb-2">{title}</h3>
       {priceTopLine && (
-        <p
-          className={`text-sm text-gray-500 mb-1 ${
-            priceTopLineStrikethrough ? "line-through" : ""
-          }`}
-        >
+        <p className={`text-sm text-gray-500 mb-1 ${priceTopLineStrikethrough ? "line-through" : ""}`}>
           {priceTopLine}
         </p>
       )}
