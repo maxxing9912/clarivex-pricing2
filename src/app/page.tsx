@@ -37,8 +37,9 @@ export default function PricingPage() {
       .finally(() => setLoaded(true));
   }, [session]);
 
-  // Typewriter animation
+    // Typewriter animation
   useEffect(() => {
+    if (!typewriterRef.current) return; // assegna solo se il ref esiste
     AOS.init({ once: true, duration: 1000, easing: "ease-out-back" });
     const words = [
       "Free, Monthly, Annual & Lifetime.",
@@ -50,10 +51,11 @@ export default function PricingPage() {
       del = false,
       timeout: NodeJS.Timeout;
     const tick = () => {
+      if (!typewriterRef.current) return;
       const full = words[wi];
       if (!del) {
         ci++;
-        typewriterRef.current!.textContent = full.slice(0, ci);
+        typewriterRef.current.textContent = full.slice(0, ci);
         if (ci === full.length) {
           del = true;
           timeout = setTimeout(tick, 1500);
@@ -61,7 +63,7 @@ export default function PricingPage() {
         }
       } else {
         ci--;
-        typewriterRef.current!.textContent = full.slice(0, ci);
+        typewriterRef.current.textContent = full.slice(0, ci);
         if (ci === 0) {
           del = false;
           wi = (wi + 1) % words.length;
@@ -224,39 +226,23 @@ function PlanCard({
       onClick={() => !disabled && onSelect()}
     >
       {badge && (
-        <div className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${badge.color}`}>
-          {badge.text}
-        </div>
+        <div className={`inline-block px-3 py-1 rounded-full text-xs mb-2 ${badge.color}`}>{badge.text}</div>
       )}
       <h3 className="text-2xl font-bold mb-2">{title}</h3>
       {priceTopLine && (
-        <p
-          className={`text-sm text-gray-500 mb-1 ${
-            priceTopLineStrikethrough ? "line-through" : ""
-          }`}
-        >
-          {priceTopLine}
-        </p>
+        <p className={`text-sm text-gray-500 mb-1 ${priceTopLineStrikethrough ? "line-through" : ""}`}>{priceTopLine}</p>
       )}
       <p className="text-3xl font-bold mb-1">
-        {priceTop}
-        {priceBottom && <span className="text-sm">{priceBottom}</span>}
+        {priceTop}{priceBottom && <span className="text-sm">{priceBottom}</span>}
       </p>
       {subtitle && <p className="text-sm text-gray-500 mb-4">{subtitle}</p>}
       <ul className="space-y-1 text-sm mb-6">
-        {features.map((f, i) => (
-          <li key={i}>{f}</li>
-        ))}
+        {features.map((f, i) => (<li key={i}>{f}</li>))}
       </ul>
       <button
         onClick={onSelect}
         disabled={disabled}
-        className={`w-full py-2 px-4 font-semibold rounded-full transition ${
-          disabled
-            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-            : "bg-indigo-600 text-white hover:bg-indigo-700"
-        }`}
-      >
+        className={`w-full py-2 px-4 font-semibold rounded-full transition ${disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700"}`}>
         {buttonLabel}
       </button>
     </div>
