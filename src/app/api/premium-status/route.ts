@@ -1,15 +1,25 @@
-import fs from "fs/promises";
-import path from "path";
+// pages/api/premium-status.ts
 
-const PREMIUM_DB_PATH = path.resolve("./premiumUsers.json");
+import { Client, GatewayIntentBits } from "discord.js";
 
-async function readPremiumUsers(): Promise<Record<string, string>> {
-  try {
-    const data = await fs.readFile(PREMIUM_DB_PATH, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return {};
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+});
+
+const ROLE_PLAN_MAP = {
+  [process.env.DISCORD_LIFETIME_ROLE_ID!]: "lifetime",
+  [process.env.DISCORD_MONTHLY_ROLE_ID!]: "monthly",
+  [process.env.DISCORD_ANNUAL_ROLE_ID!]: "annual",
+};
+
+let loggedIn = false;
+
+async function getClient() {
+  if (!loggedIn) {
+    await client.login(process.env.DISCORD_BOT_TOKEN!);
+    loggedIn = true;
   }
+  return client;
 }
 
 export async function POST(req: Request) {
@@ -18,11 +28,28 @@ export async function POST(req: Request) {
     return new Response("Missing discordId", { status: 400 });
   }
 
-  const premiumUsers = await readPremiumUsers();
-  const plan = (premiumUsers[discordId] as "free"|"monthly"|"annual"|"lifetime") || "free";
+  try {
+    const discord = await getClient();
+    const guild = await discord.guilds.fetch(process.env.DISCORD_GUILD_ID!);
+    const member = await guild.members.fetch(discordId);
 
-  return new Response(JSON.stringify({ plan }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+    const userRoles = member.roles.cache;
+    for (const [roleId, plan] of Object.entries(ROLE_PLAN_MAP)) {
+      if (userRoles.has(roleId)) {
+        return new Response(JSON.stringify({ plan }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({ plan: "free" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  } catch (e) {
+    console.error("Error fetching Discord roles:", e);
+    return new Response("Internal error", { status: 500 });
+  }
 }
